@@ -9,11 +9,10 @@ Data can be downloaded from [here](https://d396qusza40orc.cloudfront.net/repdata
 Before we begin to precess the data, we need to load required packages (`dplyr`, `ggplot2` and `scales`). We also need to set time locale to English (locale-specific conversions will affect names of the days later on).
 
 
-```{r, echo=FALSE}
-setwd("C:/Users/Mirna/Documents/GitHub/RepData_PeerAssessment1")
-```
 
-```{r, echo=TRUE, results='hide', message=FALSE}
+
+
+```r
 Sys.setlocale("LC_TIME", "English")
 
 library(dplyr)
@@ -26,9 +25,20 @@ library(scales)
 
 Data is loaded into data frame named df. Here is what the dataset looks like:
 
-```{r, echo=TRUE}
+
+```r
 df <- read.csv("./repdata-data-activity/activity.csv")
 head(df) 
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
 ```
 
 This data frame consists of 17568 observations of 3 variables: 
@@ -41,7 +51,8 @@ This data frame consists of 17568 observations of 3 variables:
 
 Both steps and interval are class integer. Variable date is class character so we will convert it into class Date.
 
-```{r, echo=TRUE}
+
+```r
 df$date <- as.Date(df$date, format="%Y-%m-%d")   
 ```
 
@@ -50,24 +61,34 @@ df$date <- as.Date(df$date, format="%Y-%m-%d")
 
 For this part of the assignment, missing values are removed from the dataset using `na.omit()` function. Data is then grouped by date and sum of each group is calculated to get total number of steps taken per day .
 
-```{r, echo=TRUE}
+
+```r
 totalSteps <- select(na.omit(df), -interval) %>% group_by(date) %>% summarise_each(funs(sum))
 ```
 
 The following graph is a histogram of the total number of steps taken each day (without missing values).
 
-```{r, echo=TRUE, results='hide', warning=FALSE}
+
+```r
 ggplot(data=totalSteps, aes(steps)) +
     geom_histogram(binwidth = 2500, fill="#009999") +
     ggtitle("Total number of steps taken each day (NA values omitted)")
 ```
 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+
 Mean and median of the total number of steps taken per day are:
 
-```{r, echo=TRUE}
+
+```r
 withoutNAs <- data.frame(mean=mean(totalSteps$steps), median=median(totalSteps$steps), 
                          row.names="withoutNAs")
 print(withoutNAs)
+```
+
+```
+##                mean median
+## withoutNAs 10766.19  10765
 ```
 
 
@@ -76,7 +97,8 @@ print(withoutNAs)
 We will make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis). 
 In this part of assignment missing values are once again omitted. Calculated average number of steps for each 5-min interaval is stored in variable avgSteps.
 
-```{r, echo=TRUE}
+
+```r
 avgSteps <- select(na.omit(df), -date) %>% group_by(interval) %>% summarise_each(funs(mean))
 ```
 
@@ -87,7 +109,8 @@ To avoid this we must convert these interval values to date-time class.
 
 Following top two lines of code first add zeroes in front of each interval (where necessary) to make each interval 4 digits long (e.g. transforms 35 into 0035) and then it converts it into date-time class.
 
-```{r, echo=TRUE, results='hide'}
+
+```r
 avgSteps$interval <- sprintf("%04d", avgSteps$interval)   
 avgSteps$interval <- as.POSIXct(avgSteps$interval, format="%H%M")
 
@@ -98,10 +121,17 @@ ggplot(data=avgSteps, aes(x=interval, y=steps)) +
     ylab("average number of steps")
 ```
 
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png) 
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r, echo=TRUE}
+
+```r
 substr(filter(avgSteps, steps==max(steps))$interval, 12, 16)
+```
+
+```
+## [1] "08:35"
 ```
 
 
@@ -111,13 +141,19 @@ There are a number of days/intervals where there are missing values (coded as `N
 
 Total number of these values in the dataset (i.e. the total number of rows with `NA`s) is:
 
-```{r, echo=TRUE}
+
+```r
 sum(is.na(df$steps))
+```
+
+```
+## [1] 2304
 ```
 
 Now we will create a new dataset (called newdf) that is equal to the original dataset but with the missing data filled in. We will fill them in using median value for that interval.
 
-```{r, echo=TRUE}
+
+```r
 #calculate median for each interval
 medianSteps <- select(na.omit(df), -date) %>% group_by(interval) %>% summarise_each(funs(median))
 
@@ -131,7 +167,8 @@ newdf <- rename(newdf, steps=steps.x)     #rename steps.x column as steps
 
 Now we can use this new dataset with filled-in values to make a histogram of the total number of steps taken each day.
 
-```{r, echo=TRUE, results='hide', warning=FALSE}
+
+```r
 newTotalSteps <- select(newdf, -interval) %>% group_by(date) %>% summarise_each(funs(sum))
 
 ggplot(data=newTotalSteps, aes(steps)) +
@@ -139,18 +176,33 @@ ggplot(data=newTotalSteps, aes(steps)) +
     ggtitle("Total number of steps taken each day (with replacement NA values)")
 ```
 
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png) 
+
 Mean and median total number of steps taken per day (with replacement `NA`s) are:
 
-```{r, echo=TRUE}
+
+```r
 withReplacementNAs <- data.frame(mean=mean(newTotalSteps$steps), median=median(newTotalSteps$steps),
                         row.names="withReplacementNAs")
 print(withReplacementNAs)
 ```
 
+```
+##                        mean median
+## withReplacementNAs 9503.869  10395
+```
+
 Let us compare these values with those calculated in the first part of the assignment:
 
-```{r, echo=TRUE}
+
+```r
 rbind(withoutNAs, withReplacementNAs)
+```
+
+```
+##                         mean median
+## withoutNAs         10766.189  10765
+## withReplacementNAs  9503.869  10395
 ```
 
 We can notice that inputing missing data has lowered both mean and median estimates of the total daily number of steps. This is expected because there are lot of intervals where median value is 0.
@@ -163,7 +215,8 @@ To be able to compare activity patterns between weekdays and weekend, we will cr
 
 The following code first creates a new variable called day in newdf dataset and fills it with a correct day of week for each date using `weekdays()` function. Afterwards, it replaces each day of week with either "weekday" or "weekend". For example, it will replace "2012-10-01" first with "Monday" and then with "weekday".
 
-```{r, echo=TRUE}
+
+```r
 newdf$day <- weekdays(newdf$date)
 logVect <- newdf$day=="Saturday" | newdf$day=="Sunday"  
 newdf$day[logVect] <- "weekend"
@@ -174,7 +227,8 @@ newdf$day <- factor(newdf$day)
 Finally, here is a panel plot that compares activity between weekend and weekday. It contains two time series plots of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).  
 For this graph, we used the same method of converting interval values into POSIX date-time class as we did for the previous time series plot.
 
-```{r, echo=TRUE, results='hide'}
+
+```r
 newAvgSteps <- select(newdf, -date) %>% group_by(day, interval) %>% summarise_each(funs(mean))
 
 newAvgSteps$interval <- sprintf("%04d", newAvgSteps$interval)   
@@ -187,5 +241,7 @@ ggplot(data=newAvgSteps, aes(x=interval, y=steps)) +
     xlab("5-minute interval") + 
     ylab("average number of steps")
 ```
+
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png) 
 
 
