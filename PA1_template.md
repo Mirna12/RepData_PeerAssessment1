@@ -205,7 +205,7 @@ rbind(withoutNAs, withReplacementNAs)
 ## withReplacementNAs  9503.869  10395
 ```
 
-We can notice that inputing missing data has lowered both mean and median estimates of the total daily number of steps. This is expected because there are lot of intervals where median value is 0.
+We can notice that imputing missing data has lowered both mean and median estimates of the total daily number of steps. This is expected because there are lot of intervals where median value is 0.
 
 
 ##Are there differences in activity patterns between weekdays and weekends?
